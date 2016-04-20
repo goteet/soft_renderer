@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\render">
+      <UniqueIdentifier>{cc275f3e-a1bf-47c6-9f16-edb961609593}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\render">
+      <UniqueIdentifier>{8297c6dd-d610-43c9-81f1-70a4f9466f65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\render\include">
+      <UniqueIdentifier>{ec6518bd-3c46-49b1-bd31-b39396bdd652}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\render\source">
+      <UniqueIdentifier>{b3f08152-4b46-45c5-868b-b4d74588ba9a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\psi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="include\irenderer.h">
+      <Filter>Header Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="source\renderer.h">
+      <Filter>Source Files\render\include</Filter>
+    </ClInclude>
+    <ClInclude Include="source\camera.h">
+      <Filter>Source Files\render\include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\iscene.h">
+      <Filter>Header Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="source\scene.h">
+      <Filter>Source Files\render\include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\isceneobject.h">
+      <Filter>Header Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="source\sceneobject.h">
+      <Filter>Source Files\render\include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\material.h">
+      <Filter>Header Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="source\geometry.h">
+      <Filter>Source Files\render\include</Filter>
+    </ClInclude>
+    <ClInclude Include="source\iori.h">
+      <Filter>Source Files\render\source</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\winmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\psi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\renderer.cpp">
+      <Filter>Source Files\render\source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\camera.cpp">
+      <Filter>Source Files\render\source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\scene.cpp">
+      <Filter>Source Files\render\source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\sceneobject.cpp">
+      <Filter>Source Files\render\source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\geometry.cpp">
+      <Filter>Source Files\render\source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource\psi.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
