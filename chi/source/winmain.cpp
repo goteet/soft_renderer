@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../resource/resource.h"
 #include <time.h>
+#include "renderer.h"
 
 ATOM MyRegisterClass(HINSTANCE hInstance);
 BOOL InitInstance(HINSTANCE, int);
@@ -9,15 +10,11 @@ HBITMAP CreateDIB(HDC dc, int width, int height, VOID** buffer);
 bool Initialize(HWND hWnd);
 void Uninitialize(HWND hWnd);
 void CenterWindow(HWND hWnd);
-
 namespace
 {
-	const int MAX_LOADSTRING = 100;
-	const wchar_t* APP_NAME = L"chi";
-
 	//´°¿Ú´óÐ¡
 	const int SCREEN_WIDTH = 800;
-	const int SCREEN_HEIGHT = 450;
+	const int SCREEN_HEIGHT = 600;
 
 	const int COLOR_BIT = 24;
 	const int LINE_PITCH = (SCREEN_WIDTH * COLOR_BIT + 31) / 32 * 4;
@@ -62,13 +59,17 @@ struct BufferBMP
 	}
 };
 
-namespace 
-{	
+namespace
+{
+	const int MAX_LOADSTRING = 100;
+	const wchar_t* APP_NAME = L"chi";
+
 	HINSTANCE hInst;
 	HWND hWindow;
 	HDC hWindowDC;
-	
+
 	BufferBMP bufferBMP;
+	Renderer* renderer = nullptr;
 }
 
 void Present(HDC hDC, BufferBMP bmp)
@@ -78,10 +79,12 @@ void Present(HDC hDC, BufferBMP bmp)
 
 void RenderScene()
 {
+	renderer->Render();
+	renderer->CopyBuffer(bufferBMP.pBuffer, bufferBMP.Width, bufferBMP.Height, bufferBMP.Pitch);
 	Present(hWindowDC, bufferBMP);
 }
 
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance,	_In_opt_ HINSTANCE hPrevInstance,	_In_ wchar_t* lpCmdLine,	_In_ int nCmdShow)
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ wchar_t* lpCmdLine, _In_ int nCmdShow)
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
@@ -97,7 +100,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,	_In_opt_ HINSTANCE hPrevInstance
 	bool running = true;
 	while (running)
 	{
-		while(::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -220,13 +223,20 @@ bool Initialize(HWND hWnd)
 		return false;
 	}
 
+	renderer = new Renderer(SCREEN_WIDTH, SCREEN_HEIGHT);
+
 	return true;
 }
 
 void Uninitialize(HWND hWnd)
 {
-	::ReleaseDC(hWindow, hWindowDC);
+	if (renderer != nullptr)
+	{
+		delete renderer;
+		renderer = nullptr;
+	}
 
+	::ReleaseDC(hWindow, hWindowDC);
 	bufferBMP.Release();
 }
 
@@ -249,6 +259,9 @@ void CenterWindow(HWND hWnd)
 
 	int halfWidth = SCREEN_WIDTH / 2 + borderWidth;
 	int halfHeight = SCREEN_HEIGHT / 2 + borderHeight;
+	if (halfWidth > centerX)halfWidth = centerX;
+	if (halfHeight > centerY)halfHeight = centerY;
+
 	::SetWindowPos(hWnd, NULL,
 		centerX - halfWidth,
 		centerY - halfHeight,
