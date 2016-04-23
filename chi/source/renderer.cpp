@@ -4,38 +4,57 @@
 #include <gml/include/matrix.h>
 #include <vector>
 
+struct Fragment
+{
+	int x;
+	int y;
+	gml::color4 color;
+	float z;
+};
+
 namespace
 {
 	const float FOV = static_cast<float>(gml::PI * 0.5);
 	const float size = 1.00f;
-	Vertex vertices[4] =
+	Vertex vertices[8] =
 	{
-		{ { -size, -size, 0.0f, 1.0f }},
-		{ { -size, +size, 0.0f, 1.0f }},
-		{ { +size, +size, 0.0f, 1.0f }},
-		{ { +size, -size, 0.0f, 1.0f }},
+		{ { -size, -size, 0.0f, 1.0f } },
+		{ { -size, +size, 0.0f, 1.0f } },
+		{ { +size, +size, 0.0f, 1.0f } },
+		{ { +size, -size, 0.0f, 1.0f } },
+		{ { 0.0f, -size, -size, 1.0f } },
+		{ { 0.0f, -size, +size, 1.0f } },
+		{ { 0.0f, +size, +size, 1.0f } },
+		{ { 0.0f, +size, -size, 1.0f } },
 	};
 
-	Index indices[6] =
+	Index indices[] =
 	{
+		4, 5, 6,
+		4, 6, 7,
 		0, 1, 2,
 		0, 2, 3,
 	};
 
-	struct VertexOut
+	struct V2F
 	{
 		gml::vec4 sv_position;
 		gml::color4 color;
 	};
 
-	std::vector<VertexOut> inner_vertices;
+	std::vector<V2F> inner_vertices;
+	std::vector<Fragment> fragments;
+	std::vector<Fragment> out_fragments;
 }
+
+
 
 Renderer::Renderer(int width, int height)
 {
 	m_width = width;
 	m_height = height;
 	m_color_buffer = new gml::color4[width * height];
+	m_depth_buffer = new float[width * height];
 
 	m_vertex_count = sizeof(vertices) / sizeof(Vertex);
 	m_triangle_count = sizeof(indices) / sizeof(Index) / 3;
@@ -44,8 +63,12 @@ Renderer::Renderer(int width, int height)
 	vertices[1].color = gml::color4::yellow;
 	vertices[2].color = gml::color4::green;
 	vertices[3].color = gml::color4::blue;
+	vertices[4].color = gml::color4::red;
+	vertices[5].color = gml::color4::yellow;
+	vertices[6].color = gml::color4::green;
+	vertices[7].color = gml::color4::blue;
 
-	m_mat_world = gml::mat44::scale(2.0f,0.2f,0.0f);
+	m_mat_world = gml::mat44::scale(1.0f,0.5f,1.0f);
 	m_mat_view = gml::mat44::look_at(gml::vec3(0.0f, 0.0f, -1.0f), gml::vec3::zero, gml::vec3(0, 1, 0));
 	m_mat_proj = gml::mat44::perspective(FOV, m_width * 1.0f / m_height, 1.0f, 1000.0f);
 	
@@ -57,6 +80,7 @@ Renderer::Renderer(int width, int height)
 Renderer::~Renderer()
 {
 	delete[] m_color_buffer;
+	delete[] m_depth_buffer;
 }
 
 void Renderer::Render()
@@ -87,8 +111,11 @@ void Renderer::ClearBuffer()
 			int index = h * m_width + w;
 			m_clear_color.r = h*0.2f / m_height;
 			m_color_buffer[index] = m_clear_color;
+			m_depth_buffer[index] = 1.0f;
 		}
 	}
+
+	fragments.clear();
 }
 void Renderer::VertexShader() 
 {
@@ -96,7 +123,10 @@ void Renderer::VertexShader()
 	for (int i = 0; i < m_vertex_count; i++)
 	{
 		inner_vertices[i].sv_position = m_mat_mvp * vertices[i].position;
-		inner_vertices[i].sv_position *= 1.0f / inner_vertices[i].sv_position.w;
+		float inv_z = 1.0f / inner_vertices[i].sv_position.w;
+		inner_vertices[i].sv_position.x *= inv_z;
+		inner_vertices[i].sv_position.y *= inv_z;
+		inner_vertices[i].sv_position.z *= inv_z;
 		inner_vertices[i].color = vertices[i].color;
 	}
 }
@@ -150,17 +180,54 @@ void Renderer::Rasterization()
 					continue;
 				}
 				//这里buffer的y要注意
-				int index = (m_height - y - 1) * m_width + x;
-				m_color_buffer[index] = inner_vertices[ia].color * (1.0f - u - v) +
-					vertices[ib].color * u +
-					vertices[ic].color * v;
+				int index = fragments.size();
+				fragments.resize(index + 1);
+				Fragment& f = fragments[index];
+				f.x = x;
+				f.y = m_height - y - 1;
+				f.z = inner_vertices[ia].sv_position.z * (1.0f - u - v) +
+					inner_vertices[ib].sv_position.z * u +
+					inner_vertices[ic].sv_position.z * v;
+
+				f.color = inner_vertices[ia].color * (1.0f - u - v) +
+					inner_vertices[ib].color * u +
+					inner_vertices[ic].color * v;
 			}
 		}
 	}
 }
 
-void Renderer::PixelShader() {}
-void Renderer::OutputMerge() {}
+void Renderer::PixelShader()
+{
+	int fragment_count = fragments.size();
+	out_fragments.resize(fragment_count);
+	for (int i = 0; i < fragment_count; i++)
+	{
+		Fragment& f = fragments[i];
+		Fragment& of = out_fragments[i];
+		
+		of.x = f.x;
+		of.y = f.y;
+		of.z = f.z;
+		of.color = f.color;
+	}
+}
+void Renderer::OutputMerge() 
+{
+	int fragment_count = out_fragments.size();
+	for (int i = 0; i < fragment_count; i++)
+	{
+		Fragment& f = out_fragments[i];
+		int index = f.y * m_width + f.x;
+
+		///z-test
+		if (f.z >= 0.0f && f.z < m_depth_buffer[index])
+		{
+			m_depth_buffer[index] = f.z;
+			m_color_buffer[index] = f.color;
+		}
+	}
+}
 
 void Renderer::CopyBuffer(byte* buffer, int width, int height, int pitch)
 {

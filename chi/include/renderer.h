@@ -31,6 +31,7 @@ private:
 	int m_height;
 	gml::color4 m_clear_color;
 	gml::color4* m_color_buffer;
+	float*  m_depth_buffer;
 
 	gml::mat44 m_mat_world;
 	gml::mat44 m_mat_view;
