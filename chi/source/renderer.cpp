@@ -23,9 +23,9 @@ namespace
 		{ { +size, +size, 0.0f, 1.0f } },
 		{ { +size, -size, 0.0f, 1.0f } },
 		{ { 0.0f, -size, -size, 1.0f } },
-		{ { 0.0f, -size, +size, 1.0f } },
-		{ { 0.0f, +size, +size, 1.0f } },
 		{ { 0.0f, +size, -size, 1.0f } },
+		{ { 0.0f, +size, +size, 1.0f } },
+		{ { 0.0f, -size, +size, 1.0f } },
 	};
 
 	Index indices[] =
@@ -146,9 +146,9 @@ void Renderer::Rasterization()
 		max = gml::max_combine(max, gml::vec2(inner_vertices[ic].sv_position));
 
 		int xmini = static_cast<int>((min.x * 0.5f + 0.5f) * m_width);
-		int xmaxi = static_cast<int>((max.x * 0.5f + 0.5f) * m_width);
+		int xmaxi = static_cast<int>((max.x * 0.5f + 0.5f) * m_width)+1;
 		int ymini = static_cast<int>((min.y * 0.5f + 0.5f) * m_height);
-		int ymaxi = static_cast<int>((max.y * 0.5f + 0.5f) * m_height);
+		int ymaxi = static_cast<int>((max.y * 0.5f + 0.5f) * m_height)+1;
 		if (xmini < 0) xmini = 0;
 		if (ymini < 0) ymini = 0;
 		if (xmaxi > m_width)xmaxi = m_width;
