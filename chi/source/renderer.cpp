@@ -8,6 +8,7 @@ struct Fragment
 {
 	int x;
 	int y;
+	int stencil = -1;
 	float z;
 	gml::vec2 uv;
 	gml::color4 color;
@@ -16,7 +17,7 @@ struct Fragment
 
 namespace
 {
-	const float FOV = static_cast<float>(gml::PI * 0.5);
+	const float FOV = static_cast<float>(65.0 / 180.0f * gml::PI);
 	const float size = 1.00f;
 	Vertex vertices[8] =
 	{
@@ -48,6 +49,7 @@ namespace
 	std::vector<V2F> inner_vertices;
 	std::vector<Fragment> fragments;
 	std::vector<Fragment> out_fragments;
+	
 
 	gml::color4 SampleGridTexture(gml::vec2 uv)
 	{
@@ -66,8 +68,10 @@ Renderer::Renderer(int width, int height)
 {
 	m_width = width;
 	m_height = height;
+
 	m_color_buffer = new gml::color4[width * height];
 	m_depth_buffer = new float[width * height];
+	m_stencil_buffer = new byte[width * height];
 
 	m_vertex_count = sizeof(vertices) / sizeof(Vertex);
 	m_triangle_count = sizeof(indices) / sizeof(Index) / 3;
@@ -82,14 +86,14 @@ Renderer::Renderer(int width, int height)
 	vertices[7].color = gml::color4::blue;
 
 	const float ALPHA = 0.5f;
-	vertices[0].color.a = ALPHA;
+	vertices[0].color.a = 0;
 	vertices[1].color.a = ALPHA;
 	vertices[2].color.a = ALPHA;
 	vertices[3].color.a = ALPHA;
 	vertices[4].color.a = ALPHA;
 	vertices[5].color.a = ALPHA;
 	vertices[6].color.a = ALPHA;
-	vertices[7].color.a = ALPHA;
+	vertices[7].color.a = 0;
 
 	m_mat_world = gml::mat44::scale(1.5f,1.5f,1.5f);
 	m_mat_view = gml::mat44::look_at(gml::vec3(0.0f, -2.0f, -5.0f), gml::vec3::zero, gml::vec3(0, 1, 0));
@@ -98,6 +102,12 @@ Renderer::Renderer(int width, int height)
 	m_mat_mv = m_mat_view * m_mat_world;
 	m_mat_vp = m_mat_proj * m_mat_view;
 	m_mat_mvp = m_mat_proj * m_mat_mv;
+
+	m_using_scissor = true;
+
+	m_clear_color = gml::color4::black;
+	m_clear_depth = 1.0f;
+	m_clear_stencil = 0;
 }
 
 Renderer::~Renderer()
@@ -109,20 +119,22 @@ Renderer::~Renderer()
 void Renderer::Render()
 {
 	static float r = 0.0f;
-	r += 0.025f;
-	const float radius = 2.5f;
+	r += 0.01f;
+	const float radius = 5.0f;
 
-	m_mat_view = gml::mat44::look_at(gml::vec3(sin(r)*radius, 2.0f, cos(r)*radius), gml::vec3::zero, gml::vec3(0, 1, 0));
+	m_mat_view = gml::mat44::look_at(gml::vec3(sin(r)*radius, 5.0f, cos(r)*radius), gml::vec3::zero, gml::vec3(0, 1, 0));
 
 	m_mat_mv = m_mat_view * m_mat_world;
 	m_mat_vp = m_mat_proj * m_mat_view;
 	m_mat_mvp = m_mat_proj * m_mat_mv;
 
+	if(m_using_scissor) PushScissorRect();
 	ClearBuffer();
 	VertexShader();
 	Rasterization();
 	PixelShader();
 	OutputMerge();
+	if (m_using_scissor) PopScissorRect();
 }
 
 void Renderer::ClearBuffer()
@@ -132,9 +144,10 @@ void Renderer::ClearBuffer()
 		for (int w = 0; w < m_width; w++)
 		{
 			int index = h * m_width + w;
-			m_clear_color.r = h*0.2f / m_height;
+			m_clear_color.r = h * 0.2f / m_height;
 			m_color_buffer[index] = m_clear_color;
-			m_depth_buffer[index] = 1.0f;
+			m_depth_buffer[index] = m_clear_depth;
+			m_stencil_buffer[index] = m_clear_stencil;
 		}
 	}
 
@@ -266,6 +279,43 @@ void Renderer::OutputMerge()
 		Fragment& f = out_fragments[i];
 		int index = f.y * m_width + f.x;
 
+		//alpha-test
+		if (f.color.a < 0.001f)
+		{
+			continue; ///discard;
+		}
+
+		//scissor-test
+		if (m_scissor_rects.size() != 0)
+		{
+			bool in_scissor_rect = false;
+			for (auto& r : m_scissor_rects)
+			{
+				if (r.hit_test(f.x, f.y) != gml::HIT_TYPE::outside)
+				{
+					in_scissor_rect = true;
+					break;
+				}
+			}
+			if (!in_scissor_rect)
+			{
+				continue;
+			}
+		}
+
+		//stencil-test
+		if (f.stencil >= 0)
+		{
+			if (f.stencil > m_stencil_buffer[index])
+			{
+				m_stencil_buffer[index] = f.stencil;
+			}
+			else
+			{
+				continue; ///discard;
+			}
+		}
+
 		// z-test
 		if (f.z >= 0.0f && f.z < m_depth_buffer[index])
 		{
@@ -280,7 +330,6 @@ void Renderer::OutputMerge()
 		auto& dst = m_color_buffer[index];
 		auto& src = f.color;
 		dst.replace(gml::lerp(gml::swizzle<gml::R, gml::G, gml::B>(dst), gml::swizzle<gml::R, gml::G, gml::B>(src), src.a));
-
 	}
 }
 
@@ -302,5 +351,33 @@ void Renderer::CopyBuffer(byte* buffer, int width, int height, int pitch)
 			buffer[index + 1] = (color32 >> 8) & 0xFF;
 			buffer[index + 2] = color32 & 0xFF;
 		}
+	}
+}
+
+void Renderer::PushScissorRect()
+{
+	float left = -0.1f;
+	float right = 0.1f;
+	float top = 0.2f;
+	float bottom = -0.2f;
+
+	gml::rect r;
+	left = left * 0.5f + 0.5f;
+	right = right * 0.5f + 0.5f;
+	top = 0.5f - top * 0.5f;
+	bottom = 0.5f - bottom * 0.5f;
+
+	r.set_left(left * m_width);
+	r.set_right(right * m_width);
+	r.set_top(top * m_height);
+	r.set_bottom(bottom * m_height);
+	m_scissor_rects.push_back(r);
+}
+
+void Renderer::PopScissorRect()
+{
+	if (m_scissor_rects.size() != 0)
+	{
+		m_scissor_rects.pop_back();
 	}
 }
