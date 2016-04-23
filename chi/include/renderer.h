@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include <gml/include/vector.h>
+#include <gml/include/matrix.h>
 #include <gml/include/color.h>
 
 typedef byte Index;
@@ -31,6 +32,13 @@ private:
 	gml::color4 m_clear_color;
 	gml::color4* m_color_buffer;
 
+	gml::mat44 m_mat_world;
+	gml::mat44 m_mat_view;
+	gml::mat44 m_mat_proj;
+	gml::mat44 m_mat_mvp;
+	gml::mat44 m_mat_mv;
+	gml::mat44 m_mat_vp;
 
+	int m_vertex_count;
 	int m_triangle_count;
 };
