@@ -10,6 +10,7 @@ struct Vertex
 {
 	gml::vec4 position;
 	gml::color4 color;
+	gml::vec2 texcoord;
 };
 
 class Renderer
