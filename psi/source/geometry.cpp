@@ -1,7 +1,7 @@
 #include "pch.h"
 #include <math.h>
-#include <gml/include/ray.h>
-#include <gml/include/aabb.h>
+#include <gmlray.h>
+#include <gmlaabb.h>
 #include "geometry.h"
 
 //////////////////////////////////////////////////////////
@@ -161,7 +161,7 @@ int IntersectTriangleWithRay(const gml::ray& ray, const gml::vec3& v0, const gml
 		return 0;
 	}
 
-	normal = cross(v2v0, v1v0).normalize();
+	normal = cross(v2v0, v1v0).normalized();
 	return 1;
 
 }

@@ -2,9 +2,9 @@
 #include <thread>
 #include <iscene.h>
 #include "renderer.h"
-#include <gml/include/math_util.h>
-#include <gml/include/ray.h>
-#include <gml/include/color.h>
+#include <gmlutility.h>
+#include <gmlray.h>
+#include <gmlcolor.h>
 
 
 IRenderer* IRenderer::Create()
@@ -103,7 +103,7 @@ gml::color3 Renderer::Trace(const IScene* scene, const gml::ray& ray, int reccur
 		return mClearColor;
 	}
 
-	gml::vec3 intersectPosition = ray.get_pos_by_len(t.t);
+	gml::vec3 intersectPosition = ray.get_offset(t.t);
 	gml::color3 color;
 	const Material* material = hitObject->GetMaterial();
 	if (material->IsReflective && reccursiveDepth < RECCURSIVE_DEPTH)	//·´Éä
@@ -222,7 +222,7 @@ void Renderer::InternalPresent(PresentStuff* seg, const IScene* scene)
 			color = Trace(scene, ray, 0);
 
 			index = x * 3 + (indexOffset - y) * seg->pitch;
-			unsigned int color_rgb = color.to_rgb();
+			unsigned int color_rgb = color.rgba();
 			seg->canvas[index + 0] = color_rgb & 0xFF;  //r
 			seg->canvas[index + 1] = (color_rgb >> 8) & 0xFF; //g
 			seg->canvas[index + 2] = (color_rgb >> 16) & 0xFF; //b

@@ -1,11 +1,7 @@
 #pragma once
 #include <material.h>
-
-namespace gml
-{
-	class ray;
-	class aabb;
-}
+#include <gmlaabb.h>
+#include <gmlray.h>
 
 class HitInfo
 {

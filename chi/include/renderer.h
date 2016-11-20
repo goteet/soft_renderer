@@ -1,9 +1,9 @@
 #pragma once
 #include "pch.h"
-#include <gml/include/vector.h>
-#include <gml/include/matrix.h>
-#include <gml/include/color.h>
-#include <gml/include/rect.h>
+#include <gmlvector.h>
+#include <gmlmatrix.h>
+#include <gmlcolor.h>
+#include <gmlrect.h>
 #include <vector>
 
 typedef byte Index;

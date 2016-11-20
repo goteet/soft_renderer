@@ -67,11 +67,11 @@ public:
 
 	inline const gml::vec3& GetExtend() const { return mExtend; }
 
-	inline const gml::vec3& GetAxisX() const { return gml::vec3::right; }
+	inline const gml::vec3& GetAxisX() const { return gml::vec3::right(); }
 
-	inline const gml::vec3& GetAxisY() const { return gml::vec3::up; }
+	inline const gml::vec3& GetAxisY() const { return gml::vec3::up(); }
 
-	inline const gml::vec3& GetAxisZ() const { return gml::vec3::forward; }
+	inline const gml::vec3& GetAxisZ() const { return gml::vec3::forward(); }
 
 	inline float GetWidth() const { return mExtend.x; }
 

@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "renderer.h"
-#include <gml/include/math_util.h>
-#include <gml/include/matrix.h>
+#include <gmlutility.h>
+#include <gmlmatrix.h>
+#include <gmlcolor.h>
 #include <vector>
 
 struct Fragment
@@ -12,12 +13,12 @@ struct Fragment
 	float z;
 	gml::vec2 uv;
 	gml::color4 color;
-	
+
 };
 
 namespace
 {
-	const float FOV = static_cast<float>(65.0 / 180.0f * gml::PI);
+	constexpr gml::degree FOV = gml::degree(65.0f);
 	const float size = 1.00f;
 	Vertex vertices[8] =
 	{
@@ -49,16 +50,16 @@ namespace
 	std::vector<V2F> inner_vertices;
 	std::vector<Fragment> fragments;
 	std::vector<Fragment> out_fragments;
-	
+
 
 	gml::color4 SampleGridTexture(gml::vec2 uv)
 	{
 		const int SCALER = 8;
-		int u = uv.x * SCALER;
-		int v = uv.y * SCALER;
+		int u = static_cast<int>(uv.x * SCALER);
+		int v = static_cast<int>(uv.y * SCALER);
 		u %= 2;
 		v %= 2;
-		return ((u^v) ? gml::color4::white : gml::color4::gray);
+		return ((u^v) ? gml::color4::white() : gml::color4::gray());
 	}
 }
 
@@ -76,14 +77,14 @@ Renderer::Renderer(int width, int height)
 	m_vertex_count = sizeof(vertices) / sizeof(Vertex);
 	m_triangle_count = sizeof(indices) / sizeof(Index) / 3;
 
-	vertices[0].color = gml::color4::red;
-	vertices[1].color = gml::color4::yellow;
-	vertices[2].color = gml::color4::green;
-	vertices[3].color = gml::color4::blue;
-	vertices[4].color = gml::color4::red;
-	vertices[5].color = gml::color4::yellow;
-	vertices[6].color = gml::color4::green;
-	vertices[7].color = gml::color4::blue;
+	vertices[0].color = gml::color4::red();
+	vertices[1].color = gml::color4::yellow();
+	vertices[2].color = gml::color4::green();
+	vertices[3].color = gml::color4::blue();
+	vertices[4].color = gml::color4::red();
+	vertices[5].color = gml::color4::yellow();
+	vertices[6].color = gml::color4::green();
+	vertices[7].color = gml::color4::blue();
 
 	const float ALPHA = 0.5f;
 	vertices[0].color.a = 0;
@@ -95,17 +96,17 @@ Renderer::Renderer(int width, int height)
 	vertices[6].color.a = ALPHA;
 	vertices[7].color.a = 0;
 
-	m_mat_world = gml::mat44::scale(1.5f,1.5f,1.5f);
-	m_mat_view = gml::mat44::look_at(gml::vec3(0.0f, -2.0f, -5.0f), gml::vec3::zero, gml::vec3(0, 1, 0));
-	m_mat_proj = gml::mat44::perspective(FOV, m_width * 1.0f / m_height, 1.0f, 1000.0f);
-	
+	m_mat_world = gml::mat44::scale(1.5f, 1.5f, 1.5f);
+	m_mat_view = gml::mat44::look_at(gml::vec3(0.0f, -2.0f, -5.0f), gml::vec3::zero(), gml::vec3::up());
+	m_mat_proj = gml::mat44::perspective_lh(FOV, m_width * 1.0f / m_height, 1.0f, 1000.0f);
+
 	m_mat_mv = m_mat_view * m_mat_world;
 	m_mat_vp = m_mat_proj * m_mat_view;
 	m_mat_mvp = m_mat_proj * m_mat_mv;
 
 	m_using_scissor = true;
 
-	m_clear_color = gml::color4::black;
+	m_clear_color = gml::color4::black();
 	m_clear_depth = 1.0f;
 	m_clear_stencil = 0;
 }
@@ -122,13 +123,16 @@ void Renderer::Render()
 	r += 0.01f;
 	const float radius = 5.0f;
 
-	m_mat_view = gml::mat44::look_at(gml::vec3(sin(r)*radius, 5.0f, cos(r)*radius), gml::vec3::zero, gml::vec3(0, 1, 0));
+	m_mat_view = gml::mat44::look_at(
+		gml::vec3(sin(r)*radius, 5.0f, cos(r)*radius),
+		gml::vec3::zero(),
+		gml::vec3::up());
 
 	m_mat_mv = m_mat_view * m_mat_world;
 	m_mat_vp = m_mat_proj * m_mat_view;
 	m_mat_mvp = m_mat_proj * m_mat_mv;
 
-	if(m_using_scissor) PushScissorRect();
+	if (m_using_scissor) PushScissorRect();
 	ClearBuffer();
 	VertexShader();
 	Rasterization();
@@ -153,7 +157,7 @@ void Renderer::ClearBuffer()
 
 	fragments.clear();
 }
-void Renderer::VertexShader() 
+void Renderer::VertexShader()
 {
 	inner_vertices.resize(m_vertex_count);
 	for (int i = 0; i < m_vertex_count; i++)
@@ -189,9 +193,9 @@ void Renderer::Rasterization()
 		max = gml::max_combine(max, gml::vec2(pc.sv_position));
 
 		int xmini = static_cast<int>((min.x * 0.5f + 0.5f) * m_width);
-		int xmaxi = static_cast<int>((max.x * 0.5f + 0.5f) * m_width)+1;
+		int xmaxi = static_cast<int>((max.x * 0.5f + 0.5f) * m_width) + 1;
 		int ymini = static_cast<int>((min.y * 0.5f + 0.5f) * m_height);
-		int ymaxi = static_cast<int>((max.y * 0.5f + 0.5f) * m_height)+1;
+		int ymaxi = static_cast<int>((max.y * 0.5f + 0.5f) * m_height) + 1;
 		if (xmini < 0) xmini = 0;
 		if (ymini < 0) ymini = 0;
 		if (xmaxi > m_width)xmaxi = m_width;
@@ -201,11 +205,11 @@ void Renderer::Rasterization()
 		gml::vec2 ab = gml::vec2(pb.sv_position) - a;
 		gml::vec2 ac = gml::vec2(pc.sv_position) - a;
 		float det = gml::det22_t(ab, ac);
-		if (gml::fequal(det ,0.0f))
+		if (gml::fequal(det, 0.0f))
 		{
 			continue;
 		}
-		
+
 		//duel-face.
 		float inv_det = 1.0f / det;
 		//float inv_det = det < 0 ? 1.0f / det : -1.0f / det;
@@ -242,7 +246,7 @@ void Renderer::Rasterization()
 				float inv_wa = 1.0f / pa.sv_position.w;
 				float inv_wb = 1.0f / pb.sv_position.w;
 				float inv_wc = 1.0f / pc.sv_position.w;
-				f.uv = pa.texcoord * w * inv_wa + 
+				f.uv = pa.texcoord * w * inv_wa +
 					pb.texcoord * u * inv_wb +
 					pc.texcoord * v * inv_wc;
 
@@ -262,7 +266,7 @@ void Renderer::PixelShader()
 	{
 		Fragment& f = fragments[i];
 		Fragment& of = out_fragments[i];
-		
+
 		of.x = f.x;
 		of.y = f.y;
 		of.z = f.z;
@@ -271,7 +275,7 @@ void Renderer::PixelShader()
 		of.color.clamp();
 	}
 }
-void Renderer::OutputMerge() 
+void Renderer::OutputMerge()
 {
 	int fragment_count = out_fragments.size();
 	for (int i = 0; i < fragment_count; i++)
@@ -291,7 +295,7 @@ void Renderer::OutputMerge()
 			bool in_scissor_rect = false;
 			for (auto& r : m_scissor_rects)
 			{
-				if (r.hit_test(f.x, f.y) != gml::HIT_TYPE::outside)
+				if (r.contains(f.x, f.y))
 				{
 					in_scissor_rect = true;
 					break;
@@ -329,7 +333,10 @@ void Renderer::OutputMerge()
 		// blending
 		auto& dst = m_color_buffer[index];
 		auto& src = f.color;
-		dst.replace(gml::lerp(gml::swizzle<gml::R, gml::G, gml::B>(dst), gml::swizzle<gml::R, gml::G, gml::B>(src), src.a));
+		dst.replace(gml::lerp(
+			gml::swizzle<gml::_R, gml::_G, gml::_B>(dst),
+			gml::swizzle<gml::_R, gml::_G, gml::_B>(src),
+			src.a));
 	}
 }
 
@@ -344,9 +351,9 @@ void Renderer::CopyBuffer(byte* buffer, int width, int height, int pitch)
 			int v = (int)(h * 1.0f / height * m_height + 0.5f);
 			int src_index = v * m_width + u;
 			//point sample
-			gml::color4& color = m_color_buffer[src_index].clamp();
+			gml::color4& color = m_color_buffer[src_index].clamped();
 
-			unsigned int color32 = color.to_rgba();
+			unsigned int color32 = color.rgba();
 			buffer[index + 0] = (color32 >> 16) & 0xFF;
 			buffer[index + 1] = (color32 >> 8) & 0xFF;
 			buffer[index + 2] = color32 & 0xFF;
@@ -367,10 +374,10 @@ void Renderer::PushScissorRect()
 	top = 0.5f - top * 0.5f;
 	bottom = 0.5f - bottom * 0.5f;
 
-	r.set_left(left * m_width);
-	r.set_right(right * m_width);
-	r.set_top(top * m_height);
-	r.set_bottom(bottom * m_height);
+	r.set_pos(left * m_width, top * m_height);
+	r.set_size(
+		(right - left)* m_width,
+		(bottom - top) *m_height);
 	m_scissor_rects.push_back(r);
 }
 

@@ -2,7 +2,7 @@
 #include <isceneobject.h>
 #include <material.h>
 #include "geometry.h"
-#include <gml/include/aabb.h>
+#include <gmlaabb.h>
 
 class SceneObject : public ISceneObject
 {

@@ -2,7 +2,7 @@
 #include <math.h>
 #include "sceneobject.h"
 #include <limits>
-#include <gml/include/ray.h>
+#include <gmlray.h>
 
 ISceneObject* ISceneObject::CreateSphere(const gml::vec3& position, float radius)
 {
@@ -82,7 +82,7 @@ bool SphereSceneObject::IntersectWithRay(const gml::ray& ray, float mint, HitInf
 	if (Intersect(ray, mSphere, t0, t1) > 0 && t0 < mint)
 	{
 		info.t = t0;
-		info.normal = (ray.get_pos_by_len(t0) - mSphere.GetCenter()).normalize();
+		info.normal = (ray.get_offset(t0) - mSphere.GetCenter()).normalized();
 		return true;
 	}
 	else
@@ -151,7 +151,7 @@ bool BoxSceneObject::IntersectWithRay(const gml::ray& ray, float mint, HitInfo& 
 	{
 		info.t = t0;
 
-		gml::vec3 iNormal = (ray.get_pos_by_len(info.t) - mBox.GetCenter()).normalize();
+		gml::vec3 iNormal = (ray.get_offset(info.t) - mBox.GetCenter()).normalized();
 		float absX = fabs(dot(iNormal, mBox.GetAxisX())) / mBox.GetExtend().x;
 		float absY = fabs(dot(iNormal, mBox.GetAxisY())) / mBox.GetExtend().y;
 		float absZ = fabs(dot(iNormal, mBox.GetAxisZ())) / mBox.GetExtend().z;
@@ -279,7 +279,8 @@ ModelSceneObject::ModelSceneObject(const gml::vec3& position, float size) :mCent
 
 	for (int i = 0; i < TEAPOT_VERT_COUNT; i++)
 	{
-		mVerts[i].set(TEAPOT_VERTS[i * 3], TEAPOT_VERTS[i * 3 + 1], TEAPOT_VERTS[i * 3 + 2]) *= size;
+		mVerts[i].set(TEAPOT_VERTS[i * 3], TEAPOT_VERTS[i * 3 + 1], TEAPOT_VERTS[i * 3 + 2]);
+		mVerts[i] *= size;
 		mAABB.expand(mVerts[i]);
 	}
 }

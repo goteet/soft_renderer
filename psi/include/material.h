@@ -1,6 +1,6 @@
 #pragma once
-#include <gml/include/vector.h>
-#include <gml/include/color.h>
+#include <gmlvector.h>
+#include <gmlcolor.h>
 
 
 class Material

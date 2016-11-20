@@ -58,7 +58,7 @@ void SceneNode::Release()
 bool SceneNode::Add(ISceneObject* obj)
 {
 	const gml::aabb& aabb = obj->GetAABB();
-	if (!mAABB.is_contain(aabb))
+	if (mAABB.is_intersect(aabb) != gml::it_none)
 	{
 		if (mParent == nullptr)
 		{
@@ -79,7 +79,7 @@ bool SceneNode::Add(ISceneObject* obj)
 				if (mChildren[i] == nullptr)
 				{
 					gml::aabb aabb = GenerateChildAABB(i);
-					if (aabb.is_contain(obj->GetAABB()))
+					if (aabb.is_intersect(obj->GetAABB()) == gml::it_contain)
 					{
 						mChildren[i] = new SceneNode(this, mLevel + 1);
 						mChildren[i]->mAABB = aabb;

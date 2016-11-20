@@ -2,8 +2,8 @@
 #include <vector>
 #include <iscene.h>
 #include "geometry.h"
-#include <gml/include/aabb.h>
-#include <gml/include/color.h>
+#include <gmlaabb.h>
+#include <gmlcolor.h>
 
 class SceneNode
 {

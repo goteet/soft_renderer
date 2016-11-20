@@ -1,5 +1,5 @@
 #pragma once 
-#include <gml/include/ray.h>
+#include <gmlray.h>
 
 class Camera
 {

@@ -3,7 +3,7 @@
 #include <irenderer.h>
 #include "camera.h"
 #include "sceneobject.h"
-#include <gml/include/color.h>
+#include <gmlcolor.h>
 
 struct PresentStuff;
 
@@ -18,5 +18,5 @@ private:
 	
 	Camera  mCamera;
 
-	gml::color3 mClearColor = gml::color3::black;
+	gml::color3 mClearColor = gml::color3::black();
 };
